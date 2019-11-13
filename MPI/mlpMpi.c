@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <mpi.h>
+
 int numProcs;
 int myrank;
 double *** network;
@@ -166,7 +167,6 @@ double* dotProd(double**w,int r,int c, double *x,int n)
     return output;
 }
 
-
 double** dotProd2(double*x1,int rx1, double *x2,int cx2)
 {
     outputDotProd2= (double**)malloc(rx1 * sizeof(double*));
@@ -257,13 +257,13 @@ void printWeights()
     }
 }
 
-void train(double (*x)[4],double (*y)[2],int epochs)
+void train(double **x,double **y,int epochs,int numInputs)
 {
 
 	for(int e=0;e<=epochs;e++)
 	{
 
-	for(int i =1;i<10;i++)
+	for(int i =0;i<numInputs;i++)
 		{
 		
 			outputs=predict(x[i]);
@@ -330,38 +330,77 @@ int main(int argc, char **argv)
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 	MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
+	if(numProcs!=5)
+	{
+		printf("number of processes should be exactly 5 for the project to run without problems !");
+		MPI_Finalize();	
+		exit(0);	
+	}
+	int numInputs;
+	double **x;
+	double **y;
+	if(myrank==0)
+    {
 
-	double x[10][4]={
-		{0,0,0,1},
-		{0,0,0,0},
-		{0,1,0,0},
-		{0,0,1,1},
-		{1,0,0,0},
-		{0,1,0,1},
-		{0,0,1,0},
-		{0,1,1,0},
-		{0,1,1,1},
-		{1,0,0,1},
-	};
-	double y[10][2]={
-		{0,1},
-		{1,0},
-		{0,1},
-		{0,1},
-		{0,1},
-		{0,1},
-		{0,1},
-		{0,1},
-		{0,1},
-		{0,1},
-	};
+        scanf("%d",&numInputs);
+		x=malloc(numInputs*sizeof(double*));
+		y=malloc(numInputs*sizeof(double*));
+		for(int i=0;i<numInputs;i++)
+		{
+			x[i]=malloc(4*sizeof(double));
+			y[i]=malloc(2*sizeof(double));
+		}
 
-	    
+		for(int i=0;i<numInputs;i++)
+        {
+            scanf("%lf %lf %lf %lf",&x[i][0],&x[i][1],&x[i][2],&x[i][3]);
+        }
+
+  
+        for(int i=1;i<numProcs;i++)
+            MPI_Send(&numInputs, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+
+        for(int i=1;i<numProcs;i++)
+            for(int j=0;j<numInputs;j++)
+               MPI_Send(x[j], 4, MPI_DOUBLE, i, 0, MPI_COMM_WORLD);
+
+
+
+		 for(int i=0;i<numInputs;i++)
+        {
+            scanf("%lf %lf",&y[i][0],&y[i][1]);
+        }
+
+        for(int i=1;i<numProcs;i++)
+            for(int j=0;j<numInputs;j++)
+               MPI_Send(y[j], 2, MPI_DOUBLE, i, 0, MPI_COMM_WORLD);
+        
+        
+    }
+    else
+    {
+        MPI_Recv(&numInputs, 1, MPI_INT, 0,0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);   
+		
+		x=malloc(numInputs*sizeof(double*));
+		y=malloc(numInputs*sizeof(double*));
+		for(int i=0;i<numInputs;i++)
+		{
+			x[i]=malloc(4*sizeof(double));
+			y[i]=malloc(2*sizeof(double));
+		}
+
+        for(int i =0;i<numInputs;i++)
+            MPI_Recv(x[i], 4, MPI_DOUBLE, 0,0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);   
+
+	    for(int i =0;i<numInputs;i++)
+            MPI_Recv(y[i], 2, MPI_DOUBLE, 0,0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);   
+
+    }
 
 	init();
 	   
 
-	 train(x,y,epochs);
+	train(x,y,epochs,numInputs);
 
 	//testing the training
 	double testX[4]={1,0,0,1};

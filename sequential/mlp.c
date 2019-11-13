@@ -14,11 +14,11 @@ double ** outputDotProd2;
 int numLayers=3;
 double lr=0.1;
 int epochs=50;
-struct rowsCol* networkWeights;
 struct rowsCol{
     int r;
     int c;
 };
+struct rowsCol* networkWeights;
 
 void init(){
     
@@ -220,11 +220,11 @@ void printWeights()
     }
 }
 
-void train(double (*x)[4],double (*y)[2],int epochs)
+void train(double **x,double **y,int epochs,int numInputs)
 {
-
+    
 for(int e=0;e<=epochs;e++)
-   for(int i =1;i<10;i++)
+   for(int i =0;i<numInputs;i++)
     {
        
         outputs=predict(x[i]);
@@ -273,7 +273,8 @@ for(int e=0;e<=epochs;e++)
         printf("\n \n");
         printWeights();
 
-        printf("\n done with epoch %d \n ",e);
+        if(i==numInputs-1)
+            printf("\n done with epoch %d \n ",e);
         
         // free(layerAdjustment);
         // free(layerError);
@@ -291,37 +292,53 @@ for(int e=0;e<=epochs;e++)
 int main(int argc, char **argv) 
 {
 	 
-	double x[10][4]={
-		{0,0,0,1},
-		{0,0,0,0},
-		{0,1,0,0},
-		{0,0,1,1},
-		{1,0,0,0},
-		{0,1,0,1},
-		{0,0,1,0},
-		{0,1,1,0},
-		{0,1,1,1},
-		{1,0,0,1},
-	};
-	double y[10][2]={
-		{0,1},
-		{1,0},
-		{0,1},
-		{0,1},
-		{0,1},
-		{0,1},
-		{0,1},
-		{0,1},
-		{0,1},
-		{0,1},
-	};
-
+	// double x[10][4]={
+	// 	{0,0,0,1},
+	// 	{0,0,0,0},
+	// 	{0,1,0,0},
+	// 	{0,0,1,1},
+	// 	{1,0,0,0},
+	// 	{0,1,0,1},
+	// 	{0,0,1,0},
+	// 	{0,1,1,0},
+	// 	{0,1,1,1},
+	// 	{1,0,0,1},
+	// };
+	// double y[10][2]={
+	// 	{0,1},
+	// 	{1,0},
+	// 	{0,1},
+	// 	{0,1},
+	// 	{0,1},
+	// 	{0,1},
+	// 	{0,1},
+	// 	{0,1},
+	// 	{0,1},
+	// 	{0,1},
+	// };
+    int numInputs;
+    scanf("%d",&numInputs);
+    double **x= malloc(numInputs*sizeof(int *));
+    double **y= malloc(numInputs*sizeof(int *));
+    for(int i=0;i<numInputs;i++)
+    {
+        x[i]=malloc(4*sizeof(int));
+        y[i]=malloc(2*sizeof(int));
+    }
+    for(int i=0;i<numInputs;i++)
+    {
+        scanf("%lf %lf %lf %lf",&x[i][0],&x[i][1],&x[i][2],&x[i][3]);
+    }
+    for(int i=0;i<numInputs;i++)
+    {
+        scanf("%lf %lf",&y[i][0],&y[i][1]);
+    }
 	init();
 	    
 
 	   
 
-	train(x,y,epochs);
+	train(x,y,epochs,numInputs);
 
 
 	//testing the training
